@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="492dp"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="118dp"
+        android:layout_marginEnd="64dp"
+        android:layout_marginBottom="118dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="36dp">
+
+            <!-- Red channel -->
+            <ImageView
+                android:id="@+id/redChannel"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:src="@drawable/pinry_saver_bitmap_icon"
+                android:tint="#FF0000" />
+
+            <!-- Blue channel -->
+            <ImageView
+                android:id="@+id/blueChannel"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:src="@drawable/pinry_saver_bitmap_icon"
+                android:tint="#0000FF" />
+
+            <!-- Green channel -->
+            <ImageView
+                android:id="@+id/greenChannel"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:src="@drawable/pinry_saver_bitmap_icon"
+                android:tint="#00FF00" />
+
+            <!-- Original icon on top -->
+            <ImageView
+                android:id="@+id/iconImageView"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                android:src="@drawable/pinry_saver_bitmap_icon" />
+
+        </FrameLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/RoundedTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Pinry URL">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextPinryUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/RoundedTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="API Token">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextToken"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/RoundedTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:hint="Default Board ID">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextBoardId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/button_background"
+            android:gravity="center"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp"
+            android:text="SAVE SETTINGS"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

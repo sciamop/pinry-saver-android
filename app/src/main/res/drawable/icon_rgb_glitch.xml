@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Red channel offset -->
+    <item android:left="6dp" android:top="2dp">
+        <bitmap android:src="@drawable/pinry_saver_bitmap_icon" android:tint="#FF0000" />
+    </item>
+    <!-- Blue channel offset -->
+    <item android:left="-6dp" android:top="2dp">
+        <bitmap android:src="@drawable/pinry_saver_bitmap_icon" android:tint="#0000FF" />
+    </item>
+    <!-- Green channel offset -->
+    <item android:left="2dp" android:top="6dp">
+        <bitmap android:src="@drawable/pinry_saver_bitmap_icon" android:tint="#00FF00" />
+    </item>
+    <!-- Original icon on top -->
+    <item>
+        <bitmap android:src="@drawable/pinry_saver_bitmap_icon" />
+    </item>
+</layer-list>
