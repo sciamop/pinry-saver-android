@@ -1,6 +1,6 @@
 # Pinry Saver
 
-![Alt text](https://pinry.whistlehog.com/media/4/b/4b5c55b2a1e7edb8a9420ce48b78587e/image.jpg "Screenshot of settings app")
+<img src="https://pinry.whistlehog.com/media/4/b/4b5c55b2a1e7edb8a9420ce48b78587e/image.jpg" width="400">
 
 An Android app that allows you to quickly save images to your Pinry instance by sharing them from other apps.
 
