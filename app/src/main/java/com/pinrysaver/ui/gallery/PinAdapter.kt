@@ -61,14 +61,24 @@ class PinAdapter(
                 45f
             }
 
-            placeholderIcon.visibility = View.VISIBLE
-            placeholderIcon.rotation = orientationToggle
-            placeholderIcon.scaleX = 0.67f
-            placeholderIcon.scaleY = 0.67f
+            // Only show placeholder/spinner if image isn't already loaded
+            val currentDrawable = imageView.drawable
+            val hasImage = currentDrawable != null && currentDrawable.intrinsicWidth > 0
+            
+            if (!hasImage) {
+                placeholderIcon.visibility = View.VISIBLE
+                placeholderIcon.rotation = orientationToggle
+                placeholderIcon.scaleX = 0.67f
+                placeholderIcon.scaleY = 0.67f
+                prepareSpinner()
+            } else {
+                // Image already loaded, don't show spinner/placeholder
+                stopSpinner()
+                placeholderIcon.visibility = View.GONE
+            }
 
-            prepareSpinner()
             imageView.load(item.image.bestImageUrl) {
-                crossfade(true)
+                crossfade(!hasImage) // Only crossfade if loading for first time
                 memoryCachePolicy(CachePolicy.ENABLED)
                 diskCachePolicy(CachePolicy.ENABLED)
                 placeholder(R.drawable.bg_pin_placeholder)

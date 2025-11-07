@@ -248,12 +248,11 @@ object PinryUploader {
             }
         }
         
-        Log.d(TAG, "Creating pin with data: $payload")
+        // Logging disabled for release
         
         val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
         
         val pinUrl = "$pinryUrl/api/v2/pins/"
-        Log.d(TAG, "Creating pin at: $pinUrl")
         
         val request = Request.Builder()
             .url(pinUrl)
@@ -266,20 +265,14 @@ object PinryUploader {
         
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "URL pin creation network error", e)
                 callback.onFailure("Network error creating pin from URL: ${e.message}")
             }
             
             override fun onResponse(call: Call, response: Response) {
-                Log.d(TAG, "URL pin creation response: ${response.code} ${response.message}")
-                
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Pin created from URL successfully!")
                     callback.onSuccess()
                 } else {
                     val errorBody = response.body?.string()
-                    Log.e(TAG, "URL pin creation failed: ${response.code} ${response.message}")
-                    Log.e(TAG, "Error body: $errorBody")
                     callback.onFailure("Pin creation from URL failed: ${response.code} ${response.message} - $errorBody")
                 }
                 response.close()
@@ -299,7 +292,6 @@ object PinryUploader {
                 ""
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Error extracting domain from URL: $imageUrl", e)
             ""
         }
     }

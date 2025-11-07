@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
@@ -80,9 +79,6 @@ class ShareReceiverActivity : AppCompatActivity() {
 
     private suspend fun processShareIntent() {
         val intent = intent
-        Log.d(TAG, "Intent action: ${intent.action}")
-        Log.d(TAG, "Intent type: ${intent.type}")
-        Log.d(TAG, "Intent extras: ${intent.extras?.keySet()?.joinToString()}")
 
         if (intent.action != Intent.ACTION_SEND || intent.type?.startsWith("image/") != true) {
             finish()
@@ -122,10 +118,8 @@ class ShareReceiverActivity : AppCompatActivity() {
         } catch (ce: CancellationException) {
             throw ce
         } catch (io: IOException) {
-            Log.e(TAG, "Error reading image", io)
             showError(getString(R.string.share_status_failure), io.localizedMessage ?: getString(R.string.error_generic))
         } catch (ex: Exception) {
-            Log.e(TAG, "Unexpected error", ex)
             showError(getString(R.string.share_status_failure), ex.localizedMessage ?: getString(R.string.error_generic))
         }
     }
@@ -187,7 +181,6 @@ class ShareReceiverActivity : AppCompatActivity() {
                 .distinct()
                 .take(6)
         } catch (ex: Exception) {
-            Log.w(TAG, "Image labeling failed", ex)
             emptyList()
         }
     }
@@ -289,7 +282,4 @@ class ShareReceiverActivity : AppCompatActivity() {
         }
     }
 
-    companion object {
-        private const val TAG = "ShareReceiver"
-    }
 }

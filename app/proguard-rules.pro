@@ -24,3 +24,17 @@
 -keep class okhttp3.** { *; }
 -keep interface okhttp3.** { *; }
 -dontwarn okhttp3.**
+
+# Strip all logging in release builds
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+}
+
+-assumenosideeffects class java.lang.System {
+    public static void out(...);
+    public static void err(...);
+}
