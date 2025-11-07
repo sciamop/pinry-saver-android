@@ -14,7 +14,8 @@ import com.pinrysaver.R
 import com.pinrysaver.data.model.PinryPin
 
 class PinAdapter(
-    private val onPinClick: (position: Int) -> Unit
+    private val onPinClick: (position: Int) -> Unit,
+    private var spanCount: Int = 2
 ) : ListAdapter<PinryPin, PinAdapter.PinViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PinViewHolder {
@@ -23,7 +24,12 @@ class PinAdapter(
     }
 
     override fun onBindViewHolder(holder: PinViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), spanCount, position)
+    }
+
+    fun updateSpanCount(count: Int) {
+        spanCount = count
+        notifyDataSetChanged()
     }
 
     class PinViewHolder(
@@ -33,6 +39,7 @@ class PinAdapter(
 
         private val imageView: ImageView = itemView.findViewById(R.id.pinImage)
         private val progressBar: ProgressBar = itemView.findViewById(R.id.itemProgress)
+        private val placeholderIcon: ImageView = itemView.findViewById(R.id.placeholderIcon)
 
         init {
             itemView.setOnClickListener {
@@ -43,7 +50,21 @@ class PinAdapter(
             }
         }
 
-        fun bind(item: PinryPin) {
+        fun bind(item: PinryPin, spanCount: Int, position: Int) {
+            val orientationToggle = if (spanCount > 0) {
+                val column = position % spanCount
+                val row = position / spanCount
+                val base = if (column % 2 == 0) 45f else -45f
+                if (row % 2 == 0) base else -base
+            } else {
+                45f
+            }
+
+            placeholderIcon.visibility = View.VISIBLE
+            placeholderIcon.rotation = orientationToggle
+            placeholderIcon.scaleX = 0.67f
+            placeholderIcon.scaleY = 0.67f
+
             progressBar.visibility = View.VISIBLE
             imageView.load(item.image.bestImageUrl) {
                 crossfade(true)
@@ -54,9 +75,11 @@ class PinAdapter(
                 listener(
                     onSuccess = { _, _ ->
                         progressBar.visibility = View.GONE
+                        placeholderIcon.visibility = View.GONE
                     },
                     onError = { _, _ ->
                         progressBar.visibility = View.GONE
+                        placeholderIcon.visibility = View.VISIBLE
                     }
                 )
             }

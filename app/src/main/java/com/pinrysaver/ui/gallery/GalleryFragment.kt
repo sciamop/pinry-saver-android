@@ -60,15 +60,20 @@ class GalleryFragment : Fragment() {
         settingsButton = root.findViewById(R.id.settingsButton)
         logoButton = root.findViewById(R.id.logoButton)
 
-        adapter = PinAdapter { position ->
-            openFullscreen(position)
-        }
-
         val orientation = resources.configuration.orientation
         val spanCount = if (orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) 3 else 2
+        adapter = PinAdapter({ position ->
+            openFullscreen(position)
+        }, spanCount)
         recyclerView.layoutManager = StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(false)
+
+        val horizontalSpacing = resources.getDimensionPixelSize(R.dimen.pin_grid_spacing)
+        val verticalSpacing = resources.getDimensionPixelSize(R.dimen.pin_grid_vertical_spacing)
+        recyclerView.addItemDecoration(
+            PinSpacingItemDecoration(spanCount, horizontalSpacing, verticalSpacing)
+        )
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
