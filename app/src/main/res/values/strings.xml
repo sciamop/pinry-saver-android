@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pinry Saver</string>
+    <string name="pinry_logo">Pinry logo</string>
+    <string name="settings">Settings</string>
+    <string name="pin_image">Pin image</string>
+    <string name="error_loading_pins">Unable to load pins.</string>
+    <string name="empty_gallery_message">No pins found.</string>
+    <string name="close">Close</string>
+    <string name="error_url_required">Please enter your Pinry server URL.</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
 </resources>

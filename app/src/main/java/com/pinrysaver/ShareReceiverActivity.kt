@@ -6,31 +6,18 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import com.pinrysaver.data.SettingsManager
 import java.io.InputStream
 
 class ShareReceiverActivity : AppCompatActivity() {
     
-    private lateinit var encryptedPrefs: EncryptedSharedPreferences
+    private lateinit var settingsManager: SettingsManager
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        initEncryptedPrefs()
+        settingsManager = SettingsManager(this)
         handleShareIntent()
-    }
-    
-    private fun initEncryptedPrefs() {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        
-        encryptedPrefs = EncryptedSharedPreferences.create(
-            "pinry_saver_prefs",
-            masterKeyAlias,
-            this,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        ) as EncryptedSharedPreferences
     }
     
     private fun handleShareIntent() {
@@ -47,11 +34,11 @@ class ShareReceiverActivity : AppCompatActivity() {
             Log.d("ShareReceiver", "Image URL: $imageUrl")
             
             if (imageUri != null) {
-                val token = encryptedPrefs.getString("api_token", null)
-                val boardId = encryptedPrefs.getString("board_id", null)
-                val pinryUrl = encryptedPrefs.getString("pinry_url", null)
+                val token = settingsManager.getApiToken()
+                val boardId = settingsManager.getBoardId()
+                val pinryUrl = settingsManager.getPinryUrl()
                 
-                if (token.isNullOrEmpty() || boardId.isNullOrEmpty() || pinryUrl.isNullOrEmpty()) {
+                if (token.isEmpty() || boardId.isEmpty() || pinryUrl.isEmpty()) {
                     Toast.makeText(this, "Please configure Pinry settings first", Toast.LENGTH_LONG).show()
                     finish()
                     return
@@ -66,7 +53,7 @@ class ShareReceiverActivity : AppCompatActivity() {
                         // Only have image bytes - use upload approach
                         Log.d("ShareReceiver", "Using upload approach")
                         val imageBytes = readImageBytes(imageUri)
-                        uploadImage(imageBytes, boardId, token, pinryUrl)
+                        uploadImage(imageBytes, boardId, token, pinryUrl, imageUrl)
                     }
                 } catch (e: Exception) {
                     Toast.makeText(this, "Error reading image: ${e.message}", Toast.LENGTH_LONG).show()
@@ -112,12 +99,13 @@ class ShareReceiverActivity : AppCompatActivity() {
         )
     }
     
-    private fun uploadImage(imageBytes: ByteArray, boardId: String, token: String, pinryUrl: String) {
+    private fun uploadImage(imageBytes: ByteArray, boardId: String, token: String, pinryUrl: String, originalUrl: String?) {
         PinryUploader.upload(
             imageBytes = imageBytes,
             boardId = boardId,
             token = token,
             pinryUrl = pinryUrl,
+            originalUrl = originalUrl,
             callback = object : PinryUploader.UploadCallback {
                 override fun onSuccess() {
                     runOnUiThread {

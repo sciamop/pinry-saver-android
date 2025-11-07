@@ -29,6 +29,7 @@ object PinryUploader {
         boardId: String,
         token: String,
         pinryUrl: String,
+        originalUrl: String? = null,
         callback: UploadCallback
     ) {
         Log.d(TAG, "Starting upload - Board ID: $boardId, URL: $pinryUrl, Image size: ${imageBytes.size} bytes")
@@ -79,8 +80,8 @@ object PinryUploader {
                             Log.d(TAG, "Extracted image ID: $imageId, URL: $imageUrl")
                             
                             if (imageId != null) {
-                                // Step 2: Create pin with image ID
-                                createPin(imageId, boardId, token, pinryUrl, callback)
+                                // Step 2: Create pin with image ID and original URL
+                                createPin(imageId, boardId, token, pinryUrl, originalUrl, callback)
                             } else {
                                 Log.e(TAG, "Failed to extract image ID from response: $responseBody")
                                 callback.onFailure("Failed to get image ID from response")
@@ -131,8 +132,8 @@ object PinryUploader {
         }
     }
     
-    private fun createPin(imageId: String, boardId: String, token: String, pinryUrl: String, callback: UploadCallback) {
-        Log.d(TAG, "Creating pin with image ID: $imageId, board: $boardId")
+    private fun createPin(imageId: String, boardId: String, token: String, pinryUrl: String, originalUrl: String?, callback: UploadCallback) {
+        Log.d(TAG, "Creating pin with image ID: $imageId, original URL: $originalUrl, board: $boardId")
         
         // Use JSON with the correct parameter name
         val pinData = """
@@ -140,9 +141,9 @@ object PinryUploader {
                 "image_by_id": $imageId,
                 "board": "${escapeJsonString(boardId)}",
                 "url": "",
-                "description": "",
+                "description": "${escapeJsonString(originalUrl ?: "")}",
                 "private": false,
-                "referer": ""
+                "referer": "${escapeJsonString(originalUrl ?: "")}"
             }
         """.trimIndent()
         
