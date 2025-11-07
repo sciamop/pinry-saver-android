@@ -97,7 +97,7 @@ class ShareReceiverActivity : AppCompatActivity() {
         val boardId = settingsManager.getBoardId()
         val pinryUrl = settingsManager.getPinryUrl()
 
-        if (token.isEmpty() || boardId.isEmpty() || pinryUrl.isEmpty()) {
+        if (token.isEmpty() || pinryUrl.isEmpty()) {
             showError(getString(R.string.share_status_failure), getString(R.string.share_detail_check_settings))
             return
         }
