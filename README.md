@@ -1,8 +1,12 @@
 # Pinry Saver
 
-<img src="https://pinry.whistlehog.com/media/4/b/4b5c55b2a1e7edb8a9420ce48b78587e/image.jpg" width="400">
-
 A beautiful Android app for browsing and saving images to your Pinry instance.
+
+<p align="center">
+  <img src="https://www.whistlehog.com/images/pinry/pinry_gallery.png" width="250" alt="Gallery View">
+  <img src="https://www.whistlehog.com/images/pinry/pinry_image.png" width="250" alt="Fullscreen View">
+  <img src="https://www.whistlehog.com/images/pinry/pinry_settings.png" width="250" alt="Settings">
+</p>
 
 ## Features
 
