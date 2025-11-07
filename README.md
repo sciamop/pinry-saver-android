@@ -35,6 +35,7 @@ A beautiful Android app for browsing and saving images to your Pinry instance.
 ## Setup
 
 1. **Get your Pinry API Token**:
+   - Requires Pinry (github.com/pinry)
    - Log into your Pinry instance
    - Go to Settings → API Tokens
    - Create a new token
