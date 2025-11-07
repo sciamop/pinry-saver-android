@@ -9,6 +9,7 @@ import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -28,12 +29,15 @@ class FullscreenPinDialogFragment : DialogFragment() {
     private lateinit var container: View
     private lateinit var viewPager: ViewPager2
     private lateinit var closeButton: ImageButton
-    private val pagerAdapter = FullscreenPinPagerAdapter()
+    private lateinit var tagButton: ImageButton
+    private lateinit var tagsRecyclerView: RecyclerView
+    private val tagsAdapter = TagsAdapter()
+    private lateinit var pagerAdapter: FullscreenPinPagerAdapter
     private var initialIndex: Int = 0
-
-    private var initialTouchY = 0f
-    private var initialTouchX = 0f
-    private var draggingDown = false
+    private var tagsVisible = false
+    
+    internal var dismissing = false
+    internal var dismissStartY = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,93 +64,146 @@ class FullscreenPinDialogFragment : DialogFragment() {
         container = view.findViewById(R.id.fullscreenContainer)
         viewPager = view.findViewById(R.id.fullscreenPager)
         closeButton = view.findViewById(R.id.closeButton)
+        tagButton = view.findViewById(R.id.tagButton)
+        tagsRecyclerView = view.findViewById(R.id.tagsRecyclerView)
 
+        pagerAdapter = FullscreenPinPagerAdapter(this)
         viewPager.adapter = pagerAdapter
         viewPager.offscreenPageLimit = 1
 
+        tagsRecyclerView.adapter = tagsAdapter
+        tagsRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+
         closeButton.setOnClickListener { dismissAllowingStateLoss() }
+        tagButton.setOnClickListener { toggleTags() }
 
         initialIndex = arguments?.getInt(ARG_START_INDEX) ?: 0
         viewPager.setCurrentItem(initialIndex, false)
 
         viewModel.pins.observe(viewLifecycleOwner) { pins ->
             val wasEmpty = pagerAdapter.itemCount == 0
-            pagerAdapter.submitList(pins)
+            pagerAdapter.submitList(pins) { adapter ->
+                pagerAdapter.setZoomCallback { isZooming ->
+                    viewPager.isUserInputEnabled = !isZooming
+                }
+            }
             if (wasEmpty && initialIndex < pins.size) {
                 viewPager.setCurrentItem(initialIndex, false)
             }
+            updateTagsForCurrentPin()
         }
 
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
                 viewModel.loadMoreIfNeeded(position, fastScroll = false)
+                updateTagsForCurrentPin()
             }
         })
-
-        attachSwipeToDismiss()
     }
 
-    private fun attachSwipeToDismiss() {
-        viewPager.getChildAt(0)?.setOnTouchListener { _, event ->
-            handleTouch(event)
+    private fun updateTagsForCurrentPin() {
+        val currentPosition = viewPager.currentItem
+        val pins = viewModel.pins.value ?: emptyList()
+        if (currentPosition < pins.size) {
+            val pin = pins[currentPosition]
+            val tags = pin.tags ?: emptyList()
+            val hasTags = tags.isNotEmpty()
+
+            if (hasTags) {
+                tagButton.setImageResource(if (tagsVisible) R.drawable.ic_tag_filled else R.drawable.ic_tag_outline)
+                tagButton.setColorFilter(
+                    ContextCompat.getColor(requireContext(), R.color.primary_color),
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
+                tagsAdapter.submitList(tags)
+                tagButton.isEnabled = true
+                if (tagsVisible) {
+                    tagsRecyclerView.visibility = View.VISIBLE
+                }
+            } else {
+                tagButton.setImageResource(R.drawable.ic_tag_outline)
+                tagButton.setColorFilter(
+                    android.graphics.Color.WHITE,
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
+                tagButton.isEnabled = false
+                tagsRecyclerView.visibility = View.GONE
+            }
         }
     }
 
-    private fun handleTouch(event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                initialTouchY = event.rawY
-                initialTouchX = event.rawX
-                draggingDown = false
-            }
-            MotionEvent.ACTION_MOVE -> {
-                val dy = event.rawY - initialTouchY
-                val dx = event.rawX - initialTouchX
+    private fun toggleTags() {
+        tagsVisible = !tagsVisible
+        updateTagsVisibility()
+    }
 
-                if (!draggingDown) {
-                    if (dy > 20 && dy > abs(dx)) {
-                        draggingDown = true
-                        viewPager.parent.requestDisallowInterceptTouchEvent(true)
-                    }
-                }
+    private fun updateTagsVisibility() {
+        val currentPosition = viewPager.currentItem
+        val pins = viewModel.pins.value ?: emptyList()
+        if (currentPosition < pins.size) {
+            val pin = pins[currentPosition]
+            val hasTags = pin.tags?.isNotEmpty() == true
 
-                if (draggingDown) {
-                    val translation = dy.coerceAtLeast(0f)
-                    viewPager.translationY = translation
-                    val alpha = 1f - (translation / DISMISS_DISTANCE).coerceIn(0f, 1f)
-                    container.background?.mutate()?.alpha = (alpha * 255).toInt()
-                    closeButton.alpha = alpha
-                    return true
-                }
-            }
-            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
-                if (draggingDown) {
-                    val totalDy = event.rawY - initialTouchY
-                    if (totalDy > DISMISS_DISTANCE) {
-                        dismissAllowingStateLoss()
-                    } else {
-                        viewPager.animate()
-                            .translationY(0f)
-                            .setDuration(200L)
-                            .withEndAction {
-                                container.background?.mutate()?.alpha = 255
-                                closeButton.alpha = 1f
-                            }
-                            .start()
-                    }
-                    draggingDown = false
-                    return true
+            if (hasTags) {
+                if (tagsVisible) {
+                    tagButton.setImageResource(R.drawable.ic_tag_filled)
+                    tagsRecyclerView.visibility = View.VISIBLE
+                    tagsRecyclerView.alpha = 0f
+                    tagsRecyclerView.animate()
+                        .alpha(1f)
+                        .setDuration(200)
+                        .start()
+                } else {
+                    tagButton.setImageResource(R.drawable.ic_tag_outline)
+                    tagsRecyclerView.animate()
+                        .alpha(0f)
+                        .setDuration(200)
+                        .withEndAction {
+                            tagsRecyclerView.visibility = View.GONE
+                        }
+                        .start()
                 }
             }
         }
-        return false
+    }
+
+    internal fun handleDismissGesture(dy: Float) {
+        val translation = dy.coerceAtLeast(0f)
+        viewPager.translationY = translation
+        val progress = (translation / DISMISS_THRESHOLD).coerceIn(0f, 1f)
+        val alpha = 1f - progress
+        container.background?.mutate()?.alpha = (alpha * 255).toInt()
+        closeButton.alpha = alpha
+        tagButton.alpha = alpha
+        tagsRecyclerView.alpha = alpha
+    }
+
+    internal fun finalizeDismiss() {
+        val translation = viewPager.translationY
+        if (translation > DISMISS_THRESHOLD) {
+            // Complete dismiss
+            dismissAllowingStateLoss()
+        } else {
+            // Snap back
+            viewPager.animate()
+                .translationY(0f)
+                .setDuration(200)
+                .withEndAction {
+                    container.background?.mutate()?.alpha = 255
+                    closeButton.alpha = 1f
+                    tagButton.alpha = 1f
+                    tagsRecyclerView.alpha = 1f
+                }
+                .start()
+        }
+        dismissing = false
     }
 
     companion object {
         const val TAG = "FullscreenPinDialog"
         private const val ARG_START_INDEX = "arg_start_index"
-        private const val DISMISS_DISTANCE = 400f
+        private const val DISMISS_THRESHOLD = 400f
 
         fun newInstance(startIndex: Int): FullscreenPinDialogFragment = FullscreenPinDialogFragment().apply {
             arguments = Bundle().apply {
@@ -155,13 +212,16 @@ class FullscreenPinDialogFragment : DialogFragment() {
         }
     }
 
-    private class FullscreenPinPagerAdapter : RecyclerView.Adapter<FullscreenPinPagerAdapter.PinPageViewHolder>() {
+    private class FullscreenPinPagerAdapter(
+        private val fragment: FullscreenPinDialogFragment
+    ) : RecyclerView.Adapter<FullscreenPinPagerAdapter.PinPageViewHolder>() {
 
         private val items = mutableListOf<PinryPin>()
+        private var zoomCallback: ((Boolean) -> Unit)? = null
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PinPageViewHolder {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.item_fullscreen_pin, parent, false)
-            return PinPageViewHolder(view)
+            return PinPageViewHolder(view, fragment, zoomCallback)
         }
 
         override fun onBindViewHolder(holder: PinPageViewHolder, position: Int) {
@@ -170,18 +230,70 @@ class FullscreenPinDialogFragment : DialogFragment() {
 
         override fun getItemCount(): Int = items.size
 
-        fun submitList(newItems: List<PinryPin>) {
+        fun submitList(newItems: List<PinryPin>, callback: ((FullscreenPinPagerAdapter) -> Unit)? = null) {
             items.clear()
             items.addAll(newItems)
             notifyDataSetChanged()
+            callback?.invoke(this)
         }
 
-        class PinPageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val imageView: ImageView = itemView.findViewById(R.id.fullscreenImage)
+        fun setZoomCallback(callback: (Boolean) -> Unit) {
+            zoomCallback = callback
+        }
+
+        class PinPageViewHolder(
+            itemView: View,
+            private val fragment: FullscreenPinDialogFragment,
+            private val zoomCallback: ((Boolean) -> Unit)?
+        ) : RecyclerView.ViewHolder(itemView) {
+            private val imageView: ZoomableImageView = itemView.findViewById(R.id.fullscreenImage)
             private val spinner: ImageView = itemView.findViewById(R.id.fullscreenProgress)
             private var spinnerRunnable: Runnable? = null
 
             fun bind(pin: PinryPin) {
+                // Reset zoom when binding new pin
+                imageView.resetZoom()
+
+                // Setup zoom callback to disable ViewPager during zoom
+                imageView.onZoomStateChanged = { isZooming ->
+                    zoomCallback?.invoke(isZooming)
+                }
+
+                // Setup dismiss callback for middle 33% swipe down
+                imageView.onDismissGesture = { startX, dy ->
+                    val viewWidth = imageView.width.toFloat()
+                    val leftBound = viewWidth * 0.33f
+                    val rightBound = viewWidth * 0.67f
+                    
+                    // Only allow dismiss in middle 33%
+                    if (startX in leftBound..rightBound) {
+                        if (!fragment.dismissing) {
+                            fragment.dismissing = true
+                            fragment.dismissStartY = 0f
+                        }
+                        fragment.handleDismissGesture(dy)
+                        true
+                    } else {
+                        false
+                    }
+                }
+                
+                imageView.onDismissEnd = {
+                    if (fragment.dismissing) {
+                        fragment.finalizeDismiss()
+                    }
+                }
+                
+                // Setup paging callback for left/right 33%
+                imageView.shouldAllowPaging = { startX, dx ->
+                    val viewWidth = imageView.width.toFloat()
+                    val leftBound = viewWidth * 0.33f
+                    val rightBound = viewWidth * 0.67f
+                    
+                    // Allow paging in left/right zones
+                    startX < leftBound || startX > rightBound
+                }
+
                 val thumbnailUrl = pin.image.bestImageUrl
                 val fullUrl = pin.image.fullSizeUrl
 

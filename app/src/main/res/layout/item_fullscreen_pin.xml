@@ -4,12 +4,11 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <ImageView
+    <com.pinrysaver.ui.gallery.ZoomableImageView
         android:id="@+id/fullscreenImage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:contentDescription="@string/pin_image"
-        android:scaleType="fitCenter" />
+        android:contentDescription="@string/pin_image" />
 
     <ImageView
         android:id="@+id/fullscreenProgress"

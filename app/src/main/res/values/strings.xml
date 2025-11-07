@@ -10,4 +10,15 @@
     <string name="error_url_required">Please enter your Pinry server URL.</string>
     <string name="settings_saved">Settings saved</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="tags">Tags</string>
+    <string name="share_status_preparing">Preparing…</string>
+    <string name="share_status_analyzing">Analyzing image…</string>
+    <string name="share_status_uploading_image">Uploading image…</string>
+    <string name="share_status_creating_pin">Creating pin…</string>
+    <string name="share_status_success">Pin saved!</string>
+    <string name="share_status_failure">Unable to save pin</string>
+    <string name="share_detail_check_settings">Update your Pinry settings to continue.</string>
+    <string name="share_tags_prefix">Tags: %1$s</string>
+    <string name="share_tags_none">Tags: (none)</string>
+    <string name="share_close">Close</string>
 </resources>

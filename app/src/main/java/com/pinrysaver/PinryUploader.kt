@@ -5,6 +5,8 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -16,6 +18,13 @@ object PinryUploader {
     interface UploadCallback {
         fun onSuccess()
         fun onFailure(error: String)
+        fun onStatus(status: UploadStatus) {}
+    }
+
+    enum class UploadStatus {
+        PREPARING,
+        UPLOADING_IMAGE,
+        CREATING_PIN
     }
     
     private val client = OkHttpClient.Builder()
@@ -30,9 +39,14 @@ object PinryUploader {
         token: String,
         pinryUrl: String,
         originalUrl: String? = null,
+        tags: List<String> = emptyList(),
         callback: UploadCallback
     ) {
-        Log.d(TAG, "Starting upload - Board ID: $boardId, URL: $pinryUrl, Image size: ${imageBytes.size} bytes")
+        Log.d(
+            TAG,
+            "Starting upload - Board ID: $boardId, URL: $pinryUrl, Image size: ${imageBytes.size} bytes, Tags: $tags"
+        )
+        callback.onStatus(UploadStatus.PREPARING)
         
         try {
             // Create a temporary file for the image
@@ -58,6 +72,8 @@ object PinryUploader {
                 .addHeader("Authorization", "Token $token")
                 .post(imageRequestBody)
                 .build()
+
+            callback.onStatus(UploadStatus.UPLOADING_IMAGE)
             
             client.newCall(imageRequest).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
@@ -81,7 +97,7 @@ object PinryUploader {
                             
                             if (imageId != null) {
                                 // Step 2: Create pin with image ID and original URL
-                                createPin(imageId, boardId, token, pinryUrl, originalUrl, callback)
+                                createPin(imageId, boardId, token, pinryUrl, originalUrl, tags, callback)
                             } else {
                                 Log.e(TAG, "Failed to extract image ID from response: $responseBody")
                                 callback.onFailure("Failed to get image ID from response")
@@ -132,24 +148,42 @@ object PinryUploader {
         }
     }
     
-    private fun createPin(imageId: String, boardId: String, token: String, pinryUrl: String, originalUrl: String?, callback: UploadCallback) {
+    private fun createPin(
+        imageId: String,
+        boardId: String,
+        token: String,
+        pinryUrl: String,
+        originalUrl: String?,
+        tags: List<String>,
+        callback: UploadCallback
+    ) {
         Log.d(TAG, "Creating pin with image ID: $imageId, original URL: $originalUrl, board: $boardId")
-        
-        // Use JSON with the correct parameter name
-        val pinData = """
-            {
-                "image_by_id": $imageId,
-                "board": "${escapeJsonString(boardId)}",
-                "url": "",
-                "description": "${escapeJsonString(originalUrl ?: "")}",
-                "private": false,
-                "referer": "${escapeJsonString(originalUrl ?: "")}"
+
+        val imageIdInt = imageId.toIntOrNull()
+        if (imageIdInt == null) {
+            callback.onFailure("Invalid image identifier returned from server")
+            return
+        }
+
+        val cleanedTags = tags.map { it.trim() }.filter { it.isNotEmpty() }
+
+        val payload = JSONObject().apply {
+            put("image_by_id", imageIdInt)
+            put("private", false)
+            put("url", "")
+            put("description", originalUrl ?: "")
+            put("referer", originalUrl ?: "")
+            if (boardId.isNotBlank()) {
+                put("board", boardId)
             }
-        """.trimIndent()
+            if (cleanedTags.isNotEmpty()) {
+                put("tags", JSONArray(cleanedTags))
+            }
+        }
         
-        Log.d(TAG, "Creating pin with data: $pinData")
+        Log.d(TAG, "Creating pin with data: $payload")
         
-        val requestBody = pinData.toRequestBody("application/json".toMediaType())
+        val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
         
         val pinUrl = "$pinryUrl/api/v2/pins/"
         Log.d(TAG, "Creating pin at: $pinUrl")
@@ -160,6 +194,8 @@ object PinryUploader {
             .addHeader("Content-Type", "application/json")
             .post(requestBody)
             .build()
+
+        callback.onStatus(UploadStatus.CREATING_PIN)
         
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -189,6 +225,7 @@ object PinryUploader {
         boardId: String,
         token: String,
         pinryUrl: String,
+        tags: List<String> = emptyList(),
         callback: UploadCallback
     ) {
         Log.d(TAG, "Creating pin from URL - URL: $imageUrl, Board ID: $boardId")
@@ -196,19 +233,24 @@ object PinryUploader {
         val domain = extractDomainFromUrl(imageUrl)
         Log.d(TAG, "Extracted domain: $domain")
         
-        val pinData = """
-            {
-                "url": "${escapeJsonString(imageUrl)}",
-                "board": "${escapeJsonString(boardId)}",
-                "description": "${escapeJsonString(domain)}",
-                "private": false,
-                "referer": ""
+        val cleanedTags = tags.map { it.trim() }.filter { it.isNotEmpty() }
+
+        val payload = JSONObject().apply {
+            put("url", imageUrl)
+            put("description", domain)
+            put("private", false)
+            put("referer", "")
+            if (boardId.isNotBlank()) {
+                put("board", boardId)
             }
-        """.trimIndent()
+            if (cleanedTags.isNotEmpty()) {
+                put("tags", JSONArray(cleanedTags))
+            }
+        }
         
-        Log.d(TAG, "Creating pin with data: $pinData")
+        Log.d(TAG, "Creating pin with data: $payload")
         
-        val requestBody = pinData.toRequestBody("application/json".toMediaType())
+        val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
         
         val pinUrl = "$pinryUrl/api/v2/pins/"
         Log.d(TAG, "Creating pin at: $pinUrl")
@@ -219,6 +261,8 @@ object PinryUploader {
             .addHeader("Content-Type", "application/json")
             .post(requestBody)
             .build()
+
+        callback.onStatus(UploadStatus.CREATING_PIN)
         
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -258,16 +302,5 @@ object PinryUploader {
             Log.w(TAG, "Error extracting domain from URL: $imageUrl", e)
             ""
         }
-    }
-    
-    private fun escapeJsonString(input: String): String {
-        return input
-            .replace("\\", "\\\\")  // Escape backslashes first
-            .replace("\"", "\\\"")  // Escape quotes
-            .replace("\n", "\\n")   // Escape newlines
-            .replace("\r", "\\r")   // Escape carriage returns
-            .replace("\t", "\\t")   // Escape tabs
-            .replace("\b", "\\b")   // Escape backspace
-            .replace("\u000C", "\\f") // Escape form feed
     }
 }
