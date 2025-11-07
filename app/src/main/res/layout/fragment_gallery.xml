@@ -22,12 +22,13 @@
             app:spanCount="2" />
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <ProgressBar
+    <ImageView
         android:id="@+id/loadingIndicator"
-        style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Large"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_gravity="center"
+        android:src="@drawable/pinry_saver_bitmap_icon"
+        android:tint="@color/primary_color"
         android:visibility="gone" />
 
     <TextView

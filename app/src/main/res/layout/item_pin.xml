@@ -23,12 +23,13 @@
         android:src="@drawable/pinry_saver_bitmap_icon"
         android:tint="@color/primary_color" />
 
-    <ProgressBar
+    <ImageView
         android:id="@+id/itemProgress"
-        style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Small"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        android:src="@drawable/pinry_saver_bitmap_icon"
+        android:tint="@color/primary_color" />
 
 </FrameLayout>
 

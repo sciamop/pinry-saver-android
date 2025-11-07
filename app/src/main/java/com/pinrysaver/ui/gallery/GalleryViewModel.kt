@@ -29,6 +29,8 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
     private var hasMore = true
     private var currentJob: Job? = null
+    private var prefetchJob: Job? = null
+    private var prefetchedPage: PrefetchedPage? = null
 
     fun hasConfiguredServer(): Boolean = repository.getSettings().isConfigured()
 
@@ -37,13 +39,18 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
 
+        prefetchJob?.cancel()
+        prefetchJob = null
+        prefetchedPage = null
+
         _loadingInitial.value = true
         _errorMessage.value = null
         currentJob?.cancel()
 
         currentJob = viewModelScope.launch {
-            val result = repository.fetchPins(offset = 0, limit = PAGE_SIZE)
-            handleResult(result, replace = true)
+            val offset = 0
+            val result = repository.fetchPins(offset = offset, limit = PAGE_SIZE)
+            applyResult(result, replace = true, requestedOffset = offset, allowPrefetch = true)
             _loadingInitial.value = false
         }
     }
@@ -53,32 +60,56 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
         _refreshing.value = true
 
+        prefetchJob?.cancel()
+        prefetchJob = null
+        prefetchedPage = null
+
         viewModelScope.launch {
             val currentCount = _pins.value?.size?.coerceAtLeast(PAGE_SIZE) ?: PAGE_SIZE
             val result = repository.fetchPins(offset = 0, limit = currentCount)
-            handleResult(result, replace = true)
+            applyResult(result, replace = true, requestedOffset = 0, allowPrefetch = true)
             _refreshing.value = false
         }
     }
 
-    fun loadMoreIfNeeded(position: Int) {
+    fun loadMoreIfNeeded(position: Int, fastScroll: Boolean) {
         if (!hasMore || currentJob?.isActive == true) return
 
         val total = _pins.value?.size ?: 0
         if (total == 0 || position < total - LOAD_MORE_THRESHOLD) return
 
+        prefetchedPage?.let { prefetched ->
+            if (prefetched.offset == total) {
+                prefetchedPage = null
+                applyResult(prefetched.result, replace = false, requestedOffset = prefetched.offset, allowPrefetch = !fastScroll)
+                return
+            }
+        }
+
         currentJob = viewModelScope.launch {
             val result = repository.fetchPins(offset = total, limit = PAGE_SIZE)
-            handleResult(result, replace = false)
+            applyResult(result, replace = false, requestedOffset = total, allowPrefetch = !fastScroll)
         }
     }
 
-    private fun handleResult(result: PinFetchResult, replace: Boolean) {
+    private fun applyResult(
+        result: PinFetchResult,
+        replace: Boolean,
+        requestedOffset: Int,
+        allowPrefetch: Boolean
+    ) {
         if (result.success) {
             hasMore = result.hasMore
             _errorMessage.value = null
             val base = if (replace) emptyList() else _pins.value.orEmpty()
             _pins.value = base + result.pins
+            if (replace) {
+                prefetchedPage = null
+            }
+            if (allowPrefetch && result.hasMore) {
+                val nextOffset = requestedOffset + result.pins.size
+                maybePrefetch(nextOffset)
+            }
         } else {
             _errorMessage.value = result.error
             if (replace) {
@@ -86,6 +117,32 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
             }
             hasMore = false
         }
+    }
+
+    private fun maybePrefetch(nextOffset: Int) {
+        if (prefetchJob?.isActive == true) return
+        if (!hasMore) return
+        prefetchedPage?.let { if (it.offset == nextOffset && it.result.success) return }
+
+        prefetchJob?.cancel()
+        prefetchJob = viewModelScope.launch {
+            try {
+                val result = repository.fetchPins(offset = nextOffset, limit = PAGE_SIZE)
+                if (result.success) {
+                    prefetchedPage = PrefetchedPage(nextOffset, result)
+                }
+            } finally {
+                prefetchJob = null
+            }
+        }
+    }
+
+    private data class PrefetchedPage(val offset: Int, val result: PinFetchResult)
+
+    override fun onCleared() {
+        super.onCleared()
+        currentJob?.cancel()
+        prefetchJob?.cancel()
     }
 
     companion object {

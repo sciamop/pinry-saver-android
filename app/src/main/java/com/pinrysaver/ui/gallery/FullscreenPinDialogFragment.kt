@@ -6,7 +6,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.widget.ImageButton
+import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -78,7 +80,7 @@ class FullscreenPinDialogFragment : DialogFragment() {
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
-                viewModel.loadMoreIfNeeded(position)
+                viewModel.loadMoreIfNeeded(position, fastScroll = false)
             }
         })
 
@@ -175,25 +177,75 @@ class FullscreenPinDialogFragment : DialogFragment() {
         }
 
         class PinPageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val imageView: android.widget.ImageView = itemView.findViewById(R.id.fullscreenImage)
-            private val progress: android.widget.ProgressBar = itemView.findViewById(R.id.fullscreenProgress)
+            private val imageView: ImageView = itemView.findViewById(R.id.fullscreenImage)
+            private val spinner: ImageView = itemView.findViewById(R.id.fullscreenProgress)
+            private var spinnerRunnable: Runnable? = null
 
             fun bind(pin: PinryPin) {
-                val targetUrl = pin.image.fullSizeUrl ?: pin.image.bestImageUrl
-                if (targetUrl.isNullOrBlank()) {
-                    progress.isGone = true
+                val thumbnailUrl = pin.image.bestImageUrl
+                val fullUrl = pin.image.fullSizeUrl
+
+                if (thumbnailUrl.isNullOrBlank() && fullUrl.isNullOrBlank()) {
+                    stopSpinner()
                     imageView.setImageResource(R.drawable.bg_pin_placeholder)
                     return
                 }
 
-                progress.isVisible = true
-                imageView.load(targetUrl) {
+                prepareSpinner()
+
+                if (!thumbnailUrl.isNullOrBlank()) {
+                    imageView.load(thumbnailUrl) {
+                        crossfade(false)
+                        listener(
+                            onSuccess = { _, _ ->
+                                if (fullUrl.isNullOrBlank()) {
+                                    stopSpinner()
+                                } else {
+                                    loadFullImage(fullUrl, imageView.drawable)
+                                }
+                            },
+                            onError = { _, _ ->
+                                if (!fullUrl.isNullOrBlank()) {
+                                    loadFullImage(fullUrl, imageView.drawable)
+                                } else {
+                                    stopSpinner()
+                                }
+                            }
+                        )
+                    }
+                } else if (!fullUrl.isNullOrBlank()) {
+                    loadFullImage(fullUrl, null)
+                }
+            }
+
+            private fun loadFullImage(url: String, placeholderDrawable: android.graphics.drawable.Drawable?) {
+                prepareSpinner()
+                imageView.load(url) {
                     crossfade(true)
+                    placeholder(placeholderDrawable)
                     listener(
-                        onSuccess = { _, _ -> progress.isInvisible = true },
-                        onError = { _, _ -> progress.isInvisible = true }
+                        onSuccess = { _, _ -> stopSpinner() },
+                        onError = { _, _ -> stopSpinner() }
                     )
                 }
+            }
+
+            private fun prepareSpinner() {
+                stopSpinner()
+                spinner.visibility = View.GONE
+                val runnable = Runnable {
+                    spinner.visibility = View.VISIBLE
+                    spinner.startAnimation(AnimationUtils.loadAnimation(itemView.context, R.anim.pin_spin))
+                }
+                spinnerRunnable = runnable
+                spinner.postDelayed(runnable, PinAdapter.SPINNER_DELAY_MS)
+            }
+
+            private fun stopSpinner() {
+                spinnerRunnable?.let { spinner.removeCallbacks(it) }
+                spinnerRunnable = null
+                spinner.clearAnimation()
+                spinner.visibility = View.GONE
             }
         }
     }

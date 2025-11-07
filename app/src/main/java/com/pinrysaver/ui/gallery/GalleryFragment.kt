@@ -2,12 +2,13 @@ package com.pinrysaver.ui.gallery
 
 import android.content.Context
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -25,13 +26,15 @@ class GalleryFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PinAdapter
-    private lateinit var loadingIndicator: ProgressBar
+    private lateinit var loadingIndicator: ImageView
     private lateinit var swipeRefreshLayout: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     private lateinit var errorText: TextView
     private lateinit var settingsButton: ImageButton
     private lateinit var logoButton: ImageView
 
     private var settingsListener: SettingsBottomSheetDialogFragment.SettingsListener? = null
+    private var isFastScrolling = false
+    private var lastScrollEventTime = 0L
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -78,11 +81,28 @@ class GalleryFragment : Fragment() {
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+                if (dy != 0) {
+                    val now = SystemClock.elapsedRealtime()
+                    val dt = now - lastScrollEventTime
+                    if (lastScrollEventTime != 0L && dt > 0) {
+                        val velocity = kotlin.math.abs(dy).toFloat() / dt.toFloat()
+                        isFastScrolling = velocity > FAST_SCROLL_THRESHOLD
+                    }
+                    lastScrollEventTime = now
+                }
                 if (dy >= 0) {
                     val layoutManager = recyclerView.layoutManager as? StaggeredGridLayoutManager ?: return
                     val lastPositions = layoutManager.findLastVisibleItemPositions(null)
                     val maxPosition = lastPositions.maxOrNull() ?: return
-                    viewModel.loadMoreIfNeeded(maxPosition)
+                    viewModel.loadMoreIfNeeded(maxPosition, isFastScrolling)
+                }
+            }
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    isFastScrolling = false
+                    lastScrollEventTime = 0L
                 }
             }
         })
@@ -114,6 +134,11 @@ class GalleryFragment : Fragment() {
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        loadingIndicator.clearAnimation()
+    }
+
     private fun observeViewModel() {
         viewModel.pins.observe(viewLifecycleOwner) { pins ->
             adapter.submitList(pins)
@@ -126,7 +151,7 @@ class GalleryFragment : Fragment() {
         }
 
         viewModel.loadingInitial.observe(viewLifecycleOwner) { isLoading ->
-            loadingIndicator.isVisible = isLoading
+            toggleLoadingIndicator(isLoading)
             swipeRefreshLayout.isEnabled = !isLoading
         }
 
@@ -162,6 +187,22 @@ class GalleryFragment : Fragment() {
         }.show(parentFragmentManager, SettingsBottomSheetDialogFragment.TAG)
     }
 
+    private fun toggleLoadingIndicator(show: Boolean) {
+        if (show) {
+            if (!loadingIndicator.isVisible) {
+                loadingIndicator.visibility = View.VISIBLE
+                loadingIndicator.startAnimation(AnimationUtils.loadAnimation(requireContext(), R.anim.pin_spin))
+            }
+        } else {
+            loadingIndicator.clearAnimation()
+            loadingIndicator.visibility = View.GONE
+        }
+    }
+
     private fun Boolean?.orFalse(): Boolean = this ?: false
+
+    private companion object {
+        private const val FAST_SCROLL_THRESHOLD = 1.5f // pixels per millisecond (~1500 px/s)
+    }
 }
 
