@@ -35,12 +35,15 @@ class GalleryFragment : Fragment() {
     private var settingsListener: SettingsBottomSheetDialogFragment.SettingsListener? = null
     private var isFastScrolling = false
     private var lastScrollEventTime = 0L
+    private var promptedForEmptyState = false
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         settingsListener = object : SettingsBottomSheetDialogFragment.SettingsListener {
-            override fun onSettingsSaved() {
+            override fun onSettingsSaved(readOnly: Boolean) {
+                viewModel.setReadOnlyMode(readOnly)
                 viewModel.loadInitial(force = true)
+                promptedForEmptyState = false
             }
         }
     }

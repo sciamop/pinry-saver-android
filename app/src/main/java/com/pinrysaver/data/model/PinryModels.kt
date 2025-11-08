@@ -6,10 +6,10 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class PinryPinsResponse(
-    val count: Int,
-    val next: String?,
-    val previous: String?,
-    val results: List<PinryPin>
+    val count: Int = 0,
+    val next: String? = null,
+    val previous: String? = null,
+    val results: List<PinryPin>? = emptyList()
 ) : Parcelable
 
 @Parcelize

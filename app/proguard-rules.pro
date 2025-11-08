@@ -25,6 +25,12 @@
 -keep interface okhttp3.** { *; }
 -dontwarn okhttp3.**
 
+# Keep data models used by Gson
+-keep class com.pinrysaver.data.model.** { *; }
+-keepclassmembers class com.pinrysaver.data.model.** {
+    *;
+}
+
 # Strip all logging in release builds
 -assumenosideeffects class android.util.Log {
     public static int v(...);

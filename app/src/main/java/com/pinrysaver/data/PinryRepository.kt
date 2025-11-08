@@ -71,9 +71,10 @@ class PinryRepository private constructor(private val context: Context) {
                 }
 
                 val pinsResponse = gson.fromJson(body, PinryPinsResponse::class.java)
+                val pins = pinsResponse.results.orEmpty()
                 return@withContext PinFetchResult(
                     success = true,
-                    pins = pinsResponse.results,
+                    pins = pins,
                     hasMore = pinsResponse.next != null,
                     totalCount = pinsResponse.count,
                     error = null
@@ -89,7 +90,12 @@ class PinryRepository private constructor(private val context: Context) {
     suspend fun validatePinryServer(baseUrl: String, token: String?): ValidationResult = withContext(Dispatchers.IO) {
         val normalized = baseUrl.trim().removeSuffix("/")
         if (normalized.isEmpty()) {
-            return@withContext ValidationResult(false, "URL cannot be empty")
+            return@withContext ValidationResult(
+                urlValid = false,
+                tokenValid = false,
+                requiresToken = false,
+                errorMessage = "URL cannot be empty"
+            )
         }
 
         val uri = Uri.parse("$normalized/api/v2/pins/")
@@ -110,17 +116,42 @@ class PinryRepository private constructor(private val context: Context) {
 
         try {
             client.newCall(request).execute().use { response ->
-                if (response.code == 200 || response.code == 401) {
-                    return@withContext ValidationResult(true, null)
+                return@withContext when (response.code) {
+                    200 -> ValidationResult(
+                        urlValid = true,
+                        tokenValid = true,
+                        requiresToken = false,
+                        errorMessage = null
+                    )
+                    401 -> {
+                        val requiresToken = true
+                        val message = if (token.isNullOrBlank()) {
+                            "This server requires an API token to access pins."
+                        } else {
+                            "The provided API token was rejected by the server."
+                        }
+                        ValidationResult(
+                            urlValid = true,
+                            tokenValid = false,
+                            requiresToken = requiresToken,
+                            errorMessage = message
+                        )
+                    }
+                    else -> ValidationResult(
+                        urlValid = false,
+                        tokenValid = false,
+                        requiresToken = false,
+                        errorMessage = "Server returned ${response.code}"
+                    )
                 }
-
-                return@withContext ValidationResult(
-                    false,
-                    "Server returned ${response.code}"
-                )
             }
         } catch (ex: IOException) {
-            return@withContext ValidationResult(false, "Network error: ${ex.localizedMessage}")
+            return@withContext ValidationResult(
+                urlValid = false,
+                tokenValid = false,
+                requiresToken = false,
+                errorMessage = "Network error: ${ex.localizedMessage}"
+            )
         }
     }
 
@@ -156,7 +187,9 @@ data class PinFetchResult(
 }
 
 data class ValidationResult(
-    val isValid: Boolean,
+    val urlValid: Boolean,
+    val tokenValid: Boolean,
+    val requiresToken: Boolean,
     val errorMessage: String?
 )
 

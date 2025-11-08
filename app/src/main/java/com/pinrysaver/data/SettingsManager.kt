@@ -20,6 +20,7 @@ class SettingsManager(context: Context) {
     }
 
     fun isConfigured(): Boolean = getPinryUrl().isNotBlank()
+    fun hasToken(): Boolean = getApiToken().isNotBlank()
 
     fun getPinryUrl(): String = prefs.getString(KEY_PINRY_URL, "").orEmpty()
 

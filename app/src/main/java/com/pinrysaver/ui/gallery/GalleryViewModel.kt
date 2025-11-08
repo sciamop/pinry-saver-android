@@ -31,6 +31,12 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
     private var currentJob: Job? = null
     private var prefetchJob: Job? = null
     private var prefetchedPage: PrefetchedPage? = null
+    private var readOnly = !repository.getSettings().hasToken()
+
+    fun isReadOnly(): Boolean = readOnly
+    fun setReadOnlyMode(value: Boolean) {
+        readOnly = value
+    }
 
     fun hasConfiguredServer(): Boolean = repository.getSettings().isConfigured()
 
@@ -48,6 +54,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
         currentJob?.cancel()
 
         currentJob = viewModelScope.launch {
+            readOnly = !repository.getSettings().hasToken()
             val offset = 0
             val result = repository.fetchPins(offset = offset, limit = PAGE_SIZE)
             applyResult(result, replace = true, requestedOffset = offset, allowPrefetch = true)

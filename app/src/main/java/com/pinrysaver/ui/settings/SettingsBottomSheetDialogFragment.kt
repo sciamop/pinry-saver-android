@@ -8,19 +8,20 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.pinrysaver.R
 import com.pinrysaver.data.PinryRepository
+import com.pinrysaver.data.ValidationResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class SettingsBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
     interface SettingsListener {
-        fun onSettingsSaved()
+        fun onSettingsSaved(readOnly: Boolean)
     }
 
     var listener: SettingsListener? = null
@@ -79,30 +80,77 @@ class SettingsBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
         val normalizedUrl = normalizeUrl(rawUrl)
 
-        statusText.isVisible = false
-        toggleLoading(true)
-
         viewLifecycleOwner.lifecycleScope.launch {
+            statusText.isVisible = false
+            toggleLoading(true)
             try {
                 val validation = repository.validatePinryServer(normalizedUrl, apiToken.ifBlank { null })
-                if (validation.isValid) {
-                    settingsManager.saveSettings(normalizedUrl, apiToken, boardId)
-                    listener?.onSettingsSaved()
-                    Toast.makeText(requireContext(), R.string.settings_saved, Toast.LENGTH_SHORT).show()
-                    dismissAllowingStateLoss()
-                } else {
-                    statusText.isVisible = true
-                    statusText.text = validation.errorMessage ?: getString(R.string.error_generic)
-                }
+                toggleLoading(false)
+                handleValidationResult(normalizedUrl, apiToken, boardId, validation)
             } catch (cancellation: CancellationException) {
+                toggleLoading(false)
                 throw cancellation
             } catch (ex: Exception) {
+                toggleLoading(false)
                 statusText.isVisible = true
                 statusText.text = ex.localizedMessage ?: getString(R.string.error_generic)
-            } finally {
-                toggleLoading(false)
             }
         }
+    }
+
+    private fun handleValidationResult(
+        normalizedUrl: String,
+        apiToken: String,
+        boardId: String,
+        validation: ValidationResult
+    ) {
+        when {
+            !validation.urlValid -> {
+                statusText.isVisible = true
+                statusText.text = validation.errorMessage ?: getString(R.string.error_generic)
+            }
+            validation.requiresToken && apiToken.isBlank() -> {
+                showTokenWarningDialog(
+                    titleRes = R.string.settings_token_required_title,
+                    messageRes = R.string.settings_token_required_message
+                ) {
+                    persistSettings(normalizedUrl, "", boardId, readOnly = true)
+                }
+            }
+            !validation.tokenValid && apiToken.isNotBlank() -> {
+                showTokenWarningDialog(
+                    titleRes = R.string.settings_token_invalid_title,
+                    messageRes = R.string.settings_token_invalid_message
+                ) {
+                    persistSettings(normalizedUrl, "", boardId, readOnly = true)
+                }
+            }
+            else -> {
+                persistSettings(normalizedUrl, apiToken, boardId, readOnly = false)
+            }
+        }
+    }
+
+    private fun showTokenWarningDialog(
+        titleRes: Int,
+        messageRes: Int,
+        onContinue: () -> Unit
+    ) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(titleRes)
+            .setMessage(messageRes)
+            .setCancelable(false)
+            .setNegativeButton(R.string.settings_return, null)
+            .setPositiveButton(R.string.settings_continue_read_only) { _, _ ->
+                onContinue()
+            }
+            .show()
+    }
+
+    private fun persistSettings(url: String, token: String, board: String, readOnly: Boolean) {
+        settingsManager.saveSettings(url, token, board)
+        listener?.onSettingsSaved(readOnly)
+        dismissAllowingStateLoss()
     }
 
     private fun toggleLoading(isLoading: Boolean) {

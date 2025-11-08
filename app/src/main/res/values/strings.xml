@@ -21,4 +21,10 @@
     <string name="share_tags_prefix">Tags: %1$s</string>
     <string name="share_tags_none">Tags: (none)</string>
     <string name="share_close">Close</string>
+    <string name="settings_token_required_title">API Token Required</string>
+    <string name="settings_token_required_message">This Pinry server requires an API token to save pins. Continue without a token to browse pins only, or return to settings to add a token.</string>
+    <string name="settings_token_invalid_title">API Token Invalid</string>
+    <string name="settings_token_invalid_message">The API token you entered was rejected by the server. Continue without a token to browse pins only, or return to settings to fix it.</string>
+    <string name="settings_continue_read_only">Continue</string>
+    <string name="settings_return">Return to settings</string>
 </resources>
