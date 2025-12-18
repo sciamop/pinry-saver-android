@@ -15,12 +15,13 @@ import com.pinrysaver.data.model.PinryPin
 
 class PinAdapter(
     private val onPinClick: (position: Int) -> Unit,
+    private val onPinLongClick: (position: Int) -> Unit,
     private var spanCount: Int = 2
 ) : ListAdapter<PinryPin, PinAdapter.PinViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PinViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_pin, parent, false)
-        return PinViewHolder(view, onPinClick)
+        return PinViewHolder(view, onPinClick, onPinLongClick)
     }
 
     override fun onBindViewHolder(holder: PinViewHolder, position: Int) {
@@ -34,7 +35,8 @@ class PinAdapter(
 
     class PinViewHolder(
         itemView: View,
-        private val onPinClick: (position: Int) -> Unit
+        private val onPinClick: (position: Int) -> Unit,
+        private val onPinLongClick: (position: Int) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val imageView: ImageView = itemView.findViewById(R.id.pinImage)
@@ -45,6 +47,15 @@ class PinAdapter(
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onPinClick(position)
+                }
+            }
+            itemView.setOnLongClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onPinLongClick(position)
+                    true
+                } else {
+                    false
                 }
             }
         }

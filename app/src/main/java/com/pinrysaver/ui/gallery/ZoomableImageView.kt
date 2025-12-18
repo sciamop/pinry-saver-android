@@ -42,6 +42,7 @@ class ZoomableImageView @JvmOverloads constructor(
     var onDismissEnd: (() -> Unit)? = null
     var onZoomStateChanged: ((isZooming: Boolean) -> Unit)? = null
     var shouldAllowPaging: ((startX: Float, dx: Float) -> Boolean)? = null
+    var onTouchActivity: (() -> Unit)? = null
 
     private var isZooming = false
     private var zoomEndRunnable: Runnable? = null
@@ -112,6 +113,7 @@ class ZoomableImageView @JvmOverloads constructor(
 
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
+                onTouchActivity?.invoke()
                 last.set(curr)
                 start.set(last)
                 dragStartX = event.x
@@ -119,6 +121,7 @@ class ZoomableImageView @JvmOverloads constructor(
                 mode = DRAG
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
+                onTouchActivity?.invoke()
                 last.set(curr)
                 mode = ZOOM
             }
