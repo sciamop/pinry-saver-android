@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -88,27 +89,19 @@ class PinAdapter(
                 )
             }
 
-            // Adjust approximate aspect ratio to help staggered grid look natural
+            // Adjust aspect ratio synchronously using ConstraintLayout
             val width = item.image.thumbnail?.width ?: item.image.width
             val height = item.image.thumbnail?.height ?: item.image.height
-            if (width != null && height != null && width > 0 && height > 0) {
-                imageView.post {
-                    val params = imageView.layoutParams
-                    val measuredWidth = imageView.width.takeIf { it > 0 }
-                        ?: imageView.measuredWidth.takeIf { it > 0 }
-                        ?: itemView.width.takeIf { it > 0 }
 
-                    if (measuredWidth != null && measuredWidth > 0) {
-                        val calculatedHeight = (measuredWidth * height / width.toFloat())
-                            .toInt()
-                            .coerceAtLeast(200)
-                        if (params.height != calculatedHeight) {
-                            params.height = calculatedHeight
-                            imageView.layoutParams = params
-                        }
-                    }
-                }
+            val params = imageView.layoutParams as ConstraintLayout.LayoutParams
+            if (width != null && height != null && width > 0 && height > 0) {
+                // Set the aspect ratio H,w:h -> Height constrained by width
+                // Actually simple "w:h" works when one dimension is 0dp
+                params.dimensionRatio = "$width:$height"
+            } else {
+                params.dimensionRatio = "1:1"
             }
+            imageView.layoutParams = params
         }
 
     }
@@ -121,4 +114,3 @@ class PinAdapter(
         }
     }
 }
-
