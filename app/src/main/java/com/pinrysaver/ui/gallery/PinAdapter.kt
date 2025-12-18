@@ -3,7 +3,6 @@ package com.pinrysaver.ui.gallery
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -38,9 +37,7 @@ class PinAdapter(
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val imageView: ImageView = itemView.findViewById(R.id.pinImage)
-        private val spinner: ImageView = itemView.findViewById(R.id.itemProgress)
         private val placeholderIcon: ImageView = itemView.findViewById(R.id.placeholderIcon)
-        private var spinnerRunnable: Runnable? = null
 
         init {
             itemView.setOnClickListener {
@@ -61,7 +58,7 @@ class PinAdapter(
                 45f
             }
 
-            // Only show placeholder/spinner if image isn't already loaded
+            // Only show placeholder if image isn't already loaded
             val currentDrawable = imageView.drawable
             val hasImage = currentDrawable != null && currentDrawable.intrinsicWidth > 0
             
@@ -70,10 +67,8 @@ class PinAdapter(
                 placeholderIcon.rotation = orientationToggle
                 placeholderIcon.scaleX = 0.67f
                 placeholderIcon.scaleY = 0.67f
-                prepareSpinner()
             } else {
-                // Image already loaded, don't show spinner/placeholder
-                stopSpinner()
+                // Image already loaded, don't show placeholder
                 placeholderIcon.visibility = View.GONE
             }
 
@@ -85,11 +80,9 @@ class PinAdapter(
                 error(R.drawable.bg_pin_placeholder)
                 listener(
                     onSuccess = { _, _ ->
-                        stopSpinner()
                         placeholderIcon.visibility = View.GONE
                     },
                     onError = { _, _ ->
-                        stopSpinner()
                         placeholderIcon.visibility = View.VISIBLE
                     }
                 )
@@ -118,28 +111,9 @@ class PinAdapter(
             }
         }
 
-        private fun prepareSpinner() {
-            stopSpinner()
-            spinner.visibility = View.GONE
-            val runnable = Runnable {
-                spinner.visibility = View.VISIBLE
-                spinner.startAnimation(AnimationUtils.loadAnimation(itemView.context, R.anim.pin_spin))
-            }
-            spinnerRunnable = runnable
-            spinner.postDelayed(runnable, SPINNER_DELAY_MS)
-        }
-
-        private fun stopSpinner() {
-            spinnerRunnable?.let { spinner.removeCallbacks(it) }
-            spinnerRunnable = null
-            spinner.clearAnimation()
-            spinner.visibility = View.GONE
-        }
     }
 
     companion object {
-        internal const val SPINNER_DELAY_MS = 120L
-
         val DiffCallback = object : DiffUtil.ItemCallback<PinryPin>() {
             override fun areItemsTheSame(oldItem: PinryPin, newItem: PinryPin): Boolean = oldItem.id == newItem.id
 

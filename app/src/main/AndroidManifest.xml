@@ -9,11 +9,11 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PinrySaver"
+        android:theme="@style/Theme.Pinstle"
         android:usesCleartextTraffic="true"
         tools:targetApi="35">
         
@@ -34,7 +34,7 @@
         <activity
             android:name=".ShareReceiverActivity"
             android:exported="true"
-            android:theme="@style/Theme.PinrySaver.Transparent">
+            android:theme="@style/Theme.Pinstle.Transparent">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

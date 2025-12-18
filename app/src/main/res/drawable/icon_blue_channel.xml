@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Blue channel - pure blue overlay -->
-    <item android:left="0dp" android:top="0dp">
-        <bitmap android:src="@drawable/pinry_saver_bitmap_icon" android:tint="#0000FF" android:alpha="0.6" />
-    </item>
-</layer-list>

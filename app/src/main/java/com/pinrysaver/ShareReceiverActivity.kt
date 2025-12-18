@@ -227,7 +227,7 @@ class ShareReceiverActivity : AppCompatActivity() {
         }
 
         if (showSpinner) {
-            progressIcon.setImageResource(R.drawable.pinry_saver_bitmap_icon)
+            progressIcon.setImageResource(R.drawable.pinstle_bitmap_icon)
             progressIcon.setColorFilter(ContextCompat.getColor(this, R.color.primary_color))
             progressIcon.visibility = View.VISIBLE
             progressIcon.startAnimation(AnimationUtils.loadAnimation(this, R.anim.pin_spin))

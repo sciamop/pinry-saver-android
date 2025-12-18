@@ -20,15 +20,7 @@
         android:layout_height="@dimen/pin_placeholder_size"
         android:layout_gravity="center"
         android:contentDescription="@string/pin_image"
-        android:src="@drawable/pinry_saver_bitmap_icon"
-        android:tint="@color/primary_color" />
-
-    <ImageView
-        android:id="@+id/itemProgress"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_gravity="center"
-        android:src="@drawable/pinry_saver_bitmap_icon"
+        android:src="@drawable/pinstle_bitmap_icon"
         android:tint="@color/primary_color" />
 
 </FrameLayout>

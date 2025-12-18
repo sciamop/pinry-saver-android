@@ -30,7 +30,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="20dp"
-            android:src="@drawable/pinry_saver_bitmap_icon"
+            android:src="@drawable/pinstle_bitmap_icon"
             android:tint="@color/primary_color" />
 
         <TextView

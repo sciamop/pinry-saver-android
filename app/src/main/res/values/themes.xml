@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.PinrySaver" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Pinstle" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary_color</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
@@ -35,7 +35,7 @@
         <item name="backgroundTint">@color/primary_color</item>
     </style>
 
-    <style name="Theme.PinrySaver.Transparent" parent="Theme.PinrySaver">
+    <style name="Theme.Pinstle.Transparent" parent="Theme.Pinstle">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
     </style>

@@ -1,4 +1,4 @@
-# Pinry Saver
+# Pinstle
 
 A beautiful Android app for browsing and saving images to your Pinry instance.
 
@@ -45,7 +45,7 @@ A beautiful Android app for browsing and saving images to your Pinry instance.
    - The board ID is in the URL: `https://your-pinry.com/board/BOARD_ID/`
 
 3. **Configure the App**:
-   - Open Pinry Saver
+   - Open Pinstle
    - Enter your Pinry URL (e.g., `https://your-pinry.com`)
    - Enter your API token
    - Enter your default board ID
@@ -55,7 +55,7 @@ A beautiful Android app for browsing and saving images to your Pinry instance.
 
 ### Browsing Your Pins
 1. Open the app to view your Pinry gallery
-2. Tap the Pinry logo (upper left) to scroll to top
+2. Tap the Pinstle logo (upper left) to scroll to top
 3. Tap the gear icon (upper right) to access settings
 4. Tap any pin to view fullscreen
 5. In fullscreen:
@@ -66,9 +66,9 @@ A beautiful Android app for browsing and saving images to your Pinry instance.
    - Tap tag icon to view AI-generated tags
 
 ### Saving Images
-1. **From Chrome/Firefox**: When viewing an image, tap share → "Pinry Saver"
-2. **From Photos**: Select an image, tap share → "Pinry Saver"
-3. **From any app**: Share any image → "Pinry Saver"
+1. **From Chrome/Firefox**: When viewing an image, tap share → "Pinstle"
+2. **From Photos**: Select an image, tap share → "Pinstle"
+3. **From any app**: Share any image → "Pinstle"
 
 The app will show a progress dialog with:
 - Thumbnail preview of the image

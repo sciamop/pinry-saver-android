@@ -10,13 +10,5 @@
         android:layout_height="match_parent"
         android:contentDescription="@string/pin_image" />
 
-    <ImageView
-        android:id="@+id/fullscreenProgress"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:src="@drawable/pinry_saver_bitmap_icon"
-        android:tint="@color/primary_color" />
-
 </FrameLayout>
 
