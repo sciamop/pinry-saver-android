@@ -1,5 +1,7 @@
 # Pinstle
 
+(Get it on the Apple App Store)[https://apps.apple.com/us/app/pinstle/id6754937420]
+
 A beautiful Android app for browsing and saving images to your Pinry instance.
 
 <p align="center">
